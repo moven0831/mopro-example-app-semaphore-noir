@@ -1924,8 +1924,11 @@ dependencies = [
  "circom-prover",
  "mopro-ffi",
  "mopro-wasm",
+ "noir",
  "num-bigint",
  "rust-witness",
+ "serde",
+ "serde_json",
  "thiserror 2.0.12",
  "uniffi",
 ]
