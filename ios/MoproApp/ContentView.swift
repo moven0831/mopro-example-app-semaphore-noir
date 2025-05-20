@@ -5,31 +5,6 @@
 import SwiftUI
 import moproFFI
 
-func serializeOutputs(_ stringArray: [String]) -> [UInt8] {
-    var bytesArray: [UInt8] = []
-    let length = stringArray.count
-    var littleEndianLength = length.littleEndian
-    let targetLength = 32
-    withUnsafeBytes(of: &littleEndianLength) {
-        bytesArray.append(contentsOf: $0)
-    }
-    for value in stringArray {
-        // TODO: should handle 254-bit input
-        var littleEndian = Int32(value)!.littleEndian
-        var byteLength = 0
-        withUnsafeBytes(of: &littleEndian) {
-            bytesArray.append(contentsOf: $0)
-            byteLength = byteLength + $0.count
-        }
-        if byteLength < targetLength {
-            let paddingCount = targetLength - byteLength
-            let paddingArray = [UInt8](repeating: 0, count: paddingCount)
-            bytesArray.append(contentsOf: paddingArray)
-        }
-    }
-    return bytesArray
-}
-
 struct ContentView: View {
     @State private var textViewText = ""
     @State private var isCircomProveButtonEnabled = true
@@ -40,9 +15,9 @@ struct ContentView: View {
     @State private var circomPublicInputs: [String]?
     @State private var generatedHalo2Proof: Data?
     @State private var halo2PublicInputs: Data?
-    @State private var isKeccakProveButtonEnabled = true
-    @State private var isKeccakVerifyButtonEnabled = false
-    @State private var generatedKeccakProof: Data?
+    @State private var isSemaphoreProveButtonEnabled = true
+    @State private var isSemaphoreVerifyButtonEnabled = false
+    @State private var generatedSemaphoreProof: Data?
     private let zkeyPath = Bundle.main.path(forResource: "multiplier2_final", ofType: "zkey")!
     private let srsPath = Bundle.main.path(forResource: "plonk_fibonacci_srs.bin", ofType: "")!
     private let vkPath = Bundle.main.path(forResource: "plonk_fibonacci_vk.bin", ofType: "")!
@@ -57,8 +32,8 @@ struct ContentView: View {
             Button("Verify Circom", action: runCircomVerifyAction).disabled(!isCircomVerifyButtonEnabled).accessibilityIdentifier("verifyCircom")
             Button("Prove Halo2", action: runHalo2ProveAction).disabled(!isHalo2roveButtonEnabled).accessibilityIdentifier("proveHalo2")
             Button("Verify Halo2", action: runHalo2VerifyAction).disabled(!isHalo2VerifyButtonEnabled).accessibilityIdentifier("verifyHalo2")
-            Button("Prove Keccak256", action: runKeccakProveAction).disabled(!isKeccakProveButtonEnabled).accessibilityIdentifier("proveKeccak")
-            Button("Verify Keccak256", action: runKeccakVerifyAction).disabled(!isKeccakVerifyButtonEnabled).accessibilityIdentifier("verifyKeccak")
+            Button("Prove Semaphore", action: runSemaphoreProveAction).disabled(!isSemaphoreProveButtonEnabled).accessibilityIdentifier("proveSemaphore")
+            Button("Verify Semaphore", action: runSemaphoreVerifyAction).disabled(!isSemaphoreVerifyButtonEnabled).accessibilityIdentifier("verifySemaphore")
 
             ScrollView {
                 Text(textViewText)
@@ -97,7 +72,6 @@ extension ContentView {
             // Store the generated proof and public inputs for later verification
             generatedCircomProof = generateProofResult.proof
             circomPublicInputs = generateProofResult.inputs
-
             textViewText += "\(String(format: "%.3f", timeTaken))s 1️⃣\n"
 
             isCircomVerifyButtonEnabled = true
@@ -122,10 +96,8 @@ extension ContentView {
             let timeTaken = end - start
             
             assert(proof.a.x.count > 0, "Proof should not be empty")
-            assert(inputs.count > 0, "Inputs should not be empty")
             
             print("Ethereum Proof: \(proof)\n")
-            print("Ethereum Inputs: \(inputs)\n")
             
             if isValid {
                 textViewText += "\(String(format: "%.3f", timeTaken))s 2️⃣\n"
@@ -162,7 +134,7 @@ extension ContentView {
             // Store the generated proof and public inputs for later verification
             generatedHalo2Proof = generateProofResult.proof
             halo2PublicInputs = generateProofResult.inputs
-            
+
             textViewText += "\(String(format: "%.3f", timeTaken))s 1️⃣\n"
             
             isHalo2VerifyButtonEnabled = true
@@ -201,27 +173,50 @@ extension ContentView {
         }
     }
 
-    func runKeccakProveAction() {
-        textViewText += "Generating Keccak256 proof... "
+    func runSemaphoreProveAction() {
+        textViewText += "Generating Semaphore proof... "
 
-        guard let srsPath = Bundle.main.path(forResource: "zkemail_srs", ofType: "local") else {
+        guard let semaphoreSrsPath = Bundle.main.path(forResource: "semaphore", ofType: "srs") else {
             DispatchQueue.main.async {
-                self.textViewText += "\nError: Could not find srs.local in app bundle.\n"
+                self.textViewText += "\nError: Could not find semaphore.srs in app bundle.\n"
             }
             return
         }
 
-        let example_x_values: [UInt8] = [123, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        let example_result_values: [UInt8] = [117, 161, 42, 122, 171, 96, 25, 82, 239, 113, 221, 109, 167, 23, 37, 234, 164, 235, 120, 131, 9, 96, 103, 84, 108, 138, 227, 249, 156, 201, 34, 46]
-        let inputsArray: [UInt8] = example_x_values + example_result_values
-        let inputsData = Data(inputsArray)
+        // Load inputs from semaphore_input.json
+        guard let inputPath = Bundle.main.path(forResource: "semaphore_input", ofType: "json") else {
+            DispatchQueue.main.async {
+                self.textViewText += "\nError: Could not find semaphore_input.json in app bundle.\n"
+            }
+            return
+        }
+
+        var inputsVec: [String] = []
+        do {
+            let inputData = try Data(contentsOf: URL(fileURLWithPath: inputPath))
+            if let json = try JSONSerialization.jsonObject(with: inputData, options: []) as? [String: Any] {
+                if let secretKey = json["secret_key"] as? String { inputsVec.append(secretKey) }
+                if let indexBits = json["index_bits"] as? [String] { inputsVec.append(contentsOf: indexBits) }
+                if let hashPath = json["hash_path"] as? [String] { inputsVec.append(contentsOf: hashPath) }
+                if let merkleProofLength = json["merkle_proof_length"] as? String { inputsVec.append(merkleProofLength) }
+                if let hashedScope = json["hashed_scope"] as? String { inputsVec.append(hashedScope) }
+                if let hashedMessage = json["hashed_message"] as? String { inputsVec.append(hashedMessage) }
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.textViewText += "\nError parsing semaphore_input.json: \(error.localizedDescription)\n"
+            }
+            return
+        }
 
         // Run in background thread to avoid blocking the UI
         DispatchQueue.global(qos: .userInitiated).async {
             do {
                 let start = CFAbsoluteTimeGetCurrent()
 
-                let proofData = try! proveKeccak256Simple(srsPath: srsPath, inputs: inputsData)
+                // Call the FFI function proveSemaphore
+                // The FFI function name might be prove_semaphore based on lib.rs, ensure moproFFI exposes it as proveSemaphore
+                let proofData = try! proveSemaphore(srsPath: semaphoreSrsPath, inputs: inputsVec)
                 assert(!proofData.isEmpty, "Proof should not be empty")
 
                 let end = CFAbsoluteTimeGetCurrent()
@@ -229,10 +224,10 @@ extension ContentView {
 
                 // Update UI on the main thread
                 DispatchQueue.main.async {
-                    self.generatedKeccakProof = proofData
+                    self.generatedSemaphoreProof = Data(proofData) // Assuming proveSemaphore returns [UInt8]
                     self.textViewText += "\(String(format: "%.3f", timeTaken))s 1️⃣\n"
-                    self.isKeccakVerifyButtonEnabled = true
-                    self.isKeccakProveButtonEnabled = false // Disable prove button after successful proof
+                    self.isSemaphoreVerifyButtonEnabled = true
+                    self.isSemaphoreProveButtonEnabled = false // Disable prove button after successful proof
                 }
             } catch {
                 // Update UI on the main thread
@@ -243,27 +238,28 @@ extension ContentView {
         }
     }
 
-    func runKeccakVerifyAction() {
-        guard let proofData = generatedKeccakProof else {
+    func runSemaphoreVerifyAction() {
+        guard let proofData = generatedSemaphoreProof else {
             textViewText += "Proof has not been generated yet.\n"
             return
         }
 
-        guard let srsPath = Bundle.main.path(forResource: "zkemail_srs", ofType: "local") else {
+        guard let semaphoreSrsPath = Bundle.main.path(forResource: "semaphore", ofType: "srs") else {
             DispatchQueue.main.async {
-                self.textViewText += "\nError: Could not find srs.local in app bundle.\n"
+                self.textViewText += "\nError: Could not find semaphore.srs in app bundle.\n"
             }
             return
         }
 
-        textViewText += "Verifying Keccak256 proof... "
+        textViewText += "Verifying Semaphore proof... "
 
         DispatchQueue.global(qos: .userInitiated).async {
             do {
                 let start = CFAbsoluteTimeGetCurrent()
 
-                // Pass proofData (which is Data) directly to the FFI function
-                let isValid = try! verifyKeccak256Simple(srsPath: srsPath, proof: proofData)
+                // Call the FFI function verifySemaphore
+                // The FFI function name might be verify_semaphore based on lib.rs, ensure moproFFI exposes it as verifySemaphore
+                let isValid = try! verifySemaphore (srsPath: semaphoreSrsPath, proof: proofData)
                 let end = CFAbsoluteTimeGetCurrent()
                 let timeTaken = end - start
 
@@ -274,21 +270,20 @@ extension ContentView {
                     } else {
                         self.textViewText += "\nProof verification failed.\n"
                     }
-                    self.isKeccakVerifyButtonEnabled = false
-                    // Optionally re-enable prove button or handle state differently after verification
-                     self.isKeccakProveButtonEnabled = true 
+                    self.isSemaphoreVerifyButtonEnabled = false
+                    self.isSemaphoreProveButtonEnabled = true
                 }
             } catch let error as MoproError {
                 // Update UI on the main thread
                 DispatchQueue.main.async {
                     self.textViewText += "\nMoproError: \(error)\n"
-                    self.isKeccakVerifyButtonEnabled = false // Keep verify disabled on error
+                    self.isSemaphoreVerifyButtonEnabled = false
                 }
             } catch {
                 // Update UI on the main thread
                 DispatchQueue.main.async {
                     self.textViewText += "\nUnexpected error: \(error.localizedDescription)\n"
-                    self.isKeccakVerifyButtonEnabled = false // Keep verify disabled on error
+                    self.isSemaphoreVerifyButtonEnabled = false
                 }
             }
         }

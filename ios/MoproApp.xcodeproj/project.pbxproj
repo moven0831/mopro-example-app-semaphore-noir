@@ -16,6 +16,12 @@
 		3F766D132DC859C200622A51 /* zkemail_input.json in Resources */ = {isa = PBXBuildFile; fileRef = 3F766D112DC859C200622A51 /* zkemail_input.json */; };
 		3F766D142DC859C200622A51 /* zkemail.json in Resources */ = {isa = PBXBuildFile; fileRef = 3F766D102DC859C200622A51 /* zkemail.json */; };
 		3F766D152DC859C200622A51 /* zkemail_srs.local in Resources */ = {isa = PBXBuildFile; fileRef = 3F766D122DC859C200622A51 /* zkemail_srs.local */; };
+		E121F92D2DDC6FE9008EBEB9 /* semaphore_input.json in Resources */ = {isa = PBXBuildFile; fileRef = E121F92C2DDC6FE9008EBEB9 /* semaphore_input.json */; };
+		E121F92E2DDC6FE9008EBEB9 /* semaphore_input.json in Resources */ = {isa = PBXBuildFile; fileRef = E121F92C2DDC6FE9008EBEB9 /* semaphore_input.json */; };
+		E121F92F2DDC6FE9008EBEB9 /* semaphore_input.json in Resources */ = {isa = PBXBuildFile; fileRef = E121F92C2DDC6FE9008EBEB9 /* semaphore_input.json */; };
+		E121F9312DDC6FF6008EBEB9 /* semaphore.srs in Resources */ = {isa = PBXBuildFile; fileRef = E121F9302DDC6FF6008EBEB9 /* semaphore.srs */; };
+		E121F9322DDC6FF6008EBEB9 /* semaphore.srs in Resources */ = {isa = PBXBuildFile; fileRef = E121F9302DDC6FF6008EBEB9 /* semaphore.srs */; };
+		E121F9332DDC6FF6008EBEB9 /* semaphore.srs in Resources */ = {isa = PBXBuildFile; fileRef = E121F9302DDC6FF6008EBEB9 /* semaphore.srs */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -48,6 +54,8 @@
 		3F766D102DC859C200622A51 /* zkemail.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = zkemail.json; sourceTree = "<group>"; };
 		3F766D112DC859C200622A51 /* zkemail_input.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = zkemail_input.json; sourceTree = "<group>"; };
 		3F766D122DC859C200622A51 /* zkemail_srs.local */ = {isa = PBXFileReference; lastKnownFileType = file; path = zkemail_srs.local; sourceTree = "<group>"; };
+		E121F92C2DDC6FE9008EBEB9 /* semaphore_input.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = semaphore_input.json; sourceTree = "<group>"; };
+		E121F9302DDC6FF6008EBEB9 /* semaphore.srs */ = {isa = PBXFileReference; lastKnownFileType = file; path = semaphore.srs; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -109,6 +117,8 @@
 				3F766D102DC859C200622A51 /* zkemail.json */,
 				3F766D112DC859C200622A51 /* zkemail_input.json */,
 				3F766D122DC859C200622A51 /* zkemail_srs.local */,
+				E121F92C2DDC6FE9008EBEB9 /* semaphore_input.json */,
+				E121F9302DDC6FF6008EBEB9 /* semaphore.srs */,
 			);
 			sourceTree = "<group>";
 		};
@@ -252,11 +262,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				2A5992332CC7750C00135402 /* plonk_fibonacci_vk.bin in Resources */,
+				E121F92F2DDC6FE9008EBEB9 /* semaphore_input.json in Resources */,
 				2A5992342CC7750C00135402 /* plonk_fibonacci_srs.bin in Resources */,
 				2A5992352CC7750C00135402 /* plonk_fibonacci_pk.bin in Resources */,
 				2A59922F2CC7750200135402 /* multiplier2_final.zkey in Resources */,
 				3F766D132DC859C200622A51 /* zkemail_input.json in Resources */,
 				3F766D142DC859C200622A51 /* zkemail.json in Resources */,
+				E121F9332DDC6FF6008EBEB9 /* semaphore.srs in Resources */,
 				3F766D152DC859C200622A51 /* zkemail_srs.local in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -265,6 +277,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E121F92D2DDC6FE9008EBEB9 /* semaphore_input.json in Resources */,
+				E121F9322DDC6FF6008EBEB9 /* semaphore.srs in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -272,6 +286,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E121F92E2DDC6FE9008EBEB9 /* semaphore_input.json in Resources */,
+				E121F9312DDC6FF6008EBEB9 /* semaphore.srs in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
